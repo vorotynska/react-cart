@@ -1,10 +1,12 @@
 import { useState, useEffect, useContext } from 'react';
 import { CartContext } from '../context/cart.jsx';
 import Cart from './Cart.jsx';
+import SearchProduct from './Search.jsx'; // Импорт компонента поиска
 
 export default function Products() {
   const [showModal, setShowModal] = useState(false);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]); // Продукты после поиска
   const [currentPage, setCurrentPage] = useState(1); // Текущая страница
   const [productsPerPage] = useState(8); // Количество продуктов на странице
   const { cartItems, addToCart } = useContext(CartContext);
@@ -18,16 +20,23 @@ export default function Products() {
     const response = await fetch('https://dummyjson.com/products');
     const data = await response.json();
     setProducts(data.products);
+    setFilteredProducts(data.products); // Изначально отобразить все продукты
   }
 
   useEffect(() => {
     getProducts();
   }, []);
 
+  // Фильтровать продукты на основе поиска
+  const handleSearchResults = (results) => {
+    setFilteredProducts(results);
+    setCurrentPage(1); // Сбросить текущую страницу на 1 после поиска
+  };
+
   // Расчет продуктов для текущей страницы
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   // Изменение текущей страницы
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -45,6 +54,9 @@ export default function Products() {
           </button>
         )}
       </div>
+
+      {/* Компонент поиска */}
+      <SearchProduct products={products} onSearchResults={handleSearchResults} />
 
       {/* Отображение продуктов для текущей страницы */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-10">
@@ -85,7 +97,7 @@ export default function Products() {
       <div className="flex justify-center mt-10">
         <nav>
           <ul className="flex">
-            {Array.from({ length: Math.ceil(products.length / productsPerPage) }, (_, i) => i + 1).map((pageNumber) => (
+            {Array.from({ length: Math.ceil(filteredProducts.length / productsPerPage) }, (_, i) => i + 1).map((pageNumber) => (
               <li key={pageNumber} className="mx-1">
                 <button
                   onClick={() => paginate(pageNumber)}
@@ -107,6 +119,7 @@ export default function Products() {
     </div>
   );
 }
+
 
 /*
     
